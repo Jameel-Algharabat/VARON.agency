@@ -130,11 +130,14 @@ export function Navigation() {
         <div className="wrap relative flex h-[var(--header-h)] items-center justify-between gap-6">
           <Link
             to="/"
-            className={`${fg} relative z-10 -ms-1 flex items-center p-1 transition-opacity duration-200 hover:opacity-70`}
+            className={`${fg} relative z-10 -ms-1 flex items-center gap-2 p-1 transition-opacity duration-200 hover:opacity-70`}
             onClick={() => setOpen(false)}
             aria-label={site.name}
           >
             <Logo className="size-7 md:size-8" />
+            <span className="t-logo" dir="ltr">
+              {site.name}
+            </span>
           </Link>
 
           <nav

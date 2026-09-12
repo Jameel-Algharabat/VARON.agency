@@ -68,6 +68,10 @@ export function Footer() {
               ·
             </span>
             {t.footer.rights}
+            <span className="mx-2" aria-hidden="true">
+              ·
+            </span>
+            <span dir="ltr">{t.footer.credit}</span>
           </p>
           <LanguageSwitch />
         </div>

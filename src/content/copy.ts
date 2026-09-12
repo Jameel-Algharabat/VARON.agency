@@ -214,6 +214,7 @@ export const copy = {
       navLabel: "Navigation",
       contactLabel: "Contact",
       rights: "All rights reserved.",
+      credit: "By Jameel Gharabat",
     },
     notFound: {
       label: "404",
@@ -438,6 +439,7 @@ export const copy = {
       navLabel: "التنقل",
       contactLabel: "تواصل",
       rights: "جميع الحقوق محفوظة.",
+      credit: "By Jameel Gharabat",
     },
     notFound: {
       label: "404",
