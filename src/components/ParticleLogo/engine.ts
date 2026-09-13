@@ -181,6 +181,8 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
   let reduced = false;
   let px = 0;
   let py = 0;
+  let aimX = 0;
+  let aimY = 0;
   let pointer = false;
   let finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   let generation = 0;
@@ -252,6 +254,10 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
 
     const formed = cycle >= FORM_END && cycle < HOLD_MARK_END + 0.15;
     const skipNoise = lite && frame % 2 === 0;
+    if (pointer) {
+      px += (aimX - px) * 0.58;
+      py += (aimY - py) * 0.58;
+    }
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -321,21 +327,28 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
         }
       }
 
-      if (pointer && finePointer && (!lite || i % 2 === 0 || formed)) {
+      let pushed = false;
+      if (pointer && finePointer) {
         const dx = p.x - px;
         const dy = p.y - py;
         const d2 = dx * dx + dy * dy;
-        const radius = formed ? 26 : 40;
+        const radius = formed ? 56 : 86;
         if (d2 > 0.04 && d2 < radius * radius) {
           const d = Math.sqrt(d2);
-          const force = (1 - d / radius) ** 2 * (formed ? 0.2 : 0.48);
+          const falloff = (1 - d / radius) ** 1.65;
+          const force = falloff * (formed ? 0.72 : 1.15);
+          if (formed) {
+            ax *= 0.38;
+            ay *= 0.38;
+          }
           ax += (dx / d) * force;
           ay += (dy / d) * force;
+          pushed = true;
         }
       }
 
-      p.vx = (p.vx + ax) * 0.9;
-      p.vy = (p.vy + ay) * 0.9;
+      p.vx = (p.vx + ax) * (pushed ? 0.84 : 0.9);
+      p.vy = (p.vy + ay) * (pushed ? 0.84 : 0.9);
       p.x += p.vx * dt * 60;
       p.y += p.vy * dt * 60;
 
@@ -404,8 +417,12 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
   return {
     resize,
     setPointer: (x, y, active) => {
-      px = x;
-      py = y;
+      aimX = x;
+      aimY = y;
+      if (active && !pointer) {
+        px = x;
+        py = y;
+      }
       pointer = active;
     },
     setVisible: (on) => {
