@@ -408,31 +408,6 @@
     transform-origin: 0 50%;
   }
 
-  /* ---------- Box grid artifact ---------- */
-  .box-cell {
-    fill: var(--color-ink);
-    opacity: 0;
-    animation: box-pulse 7.2s var(--ease) infinite;
-  }
-
-  .box-cell-static {
-    fill: var(--color-ink);
-  }
-
-  @keyframes box-pulse {
-    0%,
-    100% {
-      opacity: 0;
-    }
-    12%,
-    46% {
-      opacity: 1;
-    }
-    58% {
-      opacity: 0;
-    }
-  }
-
   /* ---------- Square spinner ----------
      A stationary rounded-square stroke whose gap travels the perimeter.
      The rect is normalised to pathLength=100, so the dash pattern and the
@@ -570,10 +545,6 @@ html[dir="rtl"] .marquee-track {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .box-cell {
-    opacity: 1;
   }
 
   .marquee-track {

@@ -29,7 +29,7 @@ export const copy = {
       secondary: "Explore our work",
       roles: ["Strategy", "Design", "Engineering", "Intelligence"],
       rolesLabel: "Disciplines",
-      artifactLabel: "Abstract grid of squares — the VARON mark in motion",
+      artifactLabel: "VARON wordmark and logo mark forming from particles",
     },
     intro: {
       label: "Studio",
@@ -254,7 +254,7 @@ export const copy = {
       secondary: "استكشف أعمالنا",
       roles: ["استراتيجية", "تصميم", "هندسة", "ذكاء"],
       rolesLabel: "التخصصات",
-      artifactLabel: "شبكة مجرّدة من المربعات — علامة VARON في حركة",
+      artifactLabel: "كلمة VARON وعلامتها تتشكّلان من جسيمات",
     },
     intro: {
       label: "الاستوديو",

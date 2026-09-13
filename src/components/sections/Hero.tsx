@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useBooking } from "../../context/booking";
 import { useLanguage } from "../../context/LanguageProvider";
 import { Arrow } from "../Arrow";
-import { BoxGrid } from "../BoxGrid";
+import { ParticleLogo } from "../ParticleLogo";
 import { Button } from "../Button";
 import { EASE } from "../../motion";
 import { ClipReveal, Lines } from "../Reveal";
@@ -21,8 +21,8 @@ export function Hero() {
   return (
     <section id="top" className="relative bg-paper pt-[calc(var(--header-h)+40px)] md:pt-[calc(var(--header-h)+64px)]">
       <div className="wrap">
-        <div className="grid-12 items-end gap-y-12">
-          <div className="col-span-12 lg:col-span-8">
+        <div className="grid-12 items-start gap-y-10">
+          <div className="col-span-12 sm:col-span-6 lg:col-span-7 lg:row-start-1">
             <ClipReveal delay={0.05}>
               <p className="t-label flex items-center gap-3 text-mute">
                 <span className="size-1.5 bg-ink" aria-hidden="true" />
@@ -35,9 +35,12 @@ export function Hero() {
             </h1>
           </div>
 
-          <motion.div className="col-span-12 sm:col-span-6 sm:col-start-7 lg:col-span-4 lg:col-start-9" {...fade(0.5)}>
-            <div className="ms-auto aspect-[2/1] w-full max-w-[420px] overflow-hidden sm:aspect-auto sm:overflow-visible">
-              <BoxGrid className="w-full" label={t.hero.artifactLabel} />
+          <motion.div
+            className="col-span-12 flex w-full min-w-0 justify-center self-start sm:col-span-6 sm:col-start-7 sm:row-start-1 sm:mt-4 sm:justify-start md:mt-5 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:mt-2"
+            {...fade(0.5)}
+          >
+            <div className="aspect-[5/4] w-full shrink-0 overflow-hidden sm:aspect-auto sm:w-[calc(100%+24px)] sm:overflow-visible lg:w-[calc(100%+64px)]">
+              <ParticleLogo className="w-full" label={t.hero.artifactLabel} />
             </div>
           </motion.div>
         </div>
