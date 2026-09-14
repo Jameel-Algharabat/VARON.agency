@@ -39,7 +39,7 @@ export function Hero() {
             className="col-span-12 flex w-full min-w-0 justify-center self-start sm:col-span-6 sm:col-start-7 sm:row-start-1 sm:mt-4 sm:justify-start md:mt-5 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:mt-2"
             {...fade(0.5)}
           >
-            <div className="aspect-[5/4] w-full shrink-0 overflow-hidden sm:aspect-auto sm:w-[calc(100%+24px)] sm:overflow-visible lg:w-[calc(100%+64px)]">
+            <div className="aspect-[5/4] w-full shrink-0 overflow-hidden sm:aspect-auto">
               <ParticleLogo className="w-full" label={t.hero.artifactLabel} />
             </div>
           </motion.div>
