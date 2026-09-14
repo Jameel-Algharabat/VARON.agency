@@ -29,7 +29,7 @@ export const copy = {
       secondary: "Explore our work",
       roles: ["Strategy", "Design", "Engineering", "Intelligence"],
       rolesLabel: "Disciplines",
-      artifactLabel: "VARON wordmark and logo mark forming from particles",
+      artifactLabel: "VARON wordmark forming from particles",
     },
     intro: {
       label: "Studio",
@@ -44,12 +44,10 @@ export const copy = {
       title: "One engagement,\nshown in full.",
       lead: "Architecture, interface, and engineering — treated as one system, from the first brief to launch.",
       viewProject: "View project",
-      metaProject: "Project",
       metaClient: "Client",
       metaCategory: "Category",
       metaScope: "Scope",
       featured: {
-        id: "open",
         n: "01",
         name: "open",
         category: "Digital product & platform",
@@ -254,7 +252,7 @@ export const copy = {
       secondary: "استكشف أعمالنا",
       roles: ["استراتيجية", "تصميم", "هندسة", "ذكاء"],
       rolesLabel: "التخصصات",
-      artifactLabel: "كلمة VARON وعلامتها تتشكّلان من جسيمات",
+      artifactLabel: "كلمة VARON تتشكّل من جسيمات",
     },
     intro: {
       label: "الاستوديو",
@@ -269,12 +267,10 @@ export const copy = {
       title: "شراكة واحدة،\nتُعرض كاملة.",
       lead: "المعمارية والواجهة والهندسة — تُعالَج كمنظومة واحدة، من الإحاطة الأولى حتى الإطلاق.",
       viewProject: "عرض المشروع",
-      metaProject: "المشروع",
       metaClient: "العميل",
       metaCategory: "الفئة",
       metaScope: "النطاق",
       featured: {
-        id: "open",
         n: "01",
         name: "open",
         category: "منتج رقمي ومنصة",

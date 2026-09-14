@@ -1,4 +1,4 @@
-import { assignMarks, particleCount, sampleMark, sampleWordmark, type Target } from "./sampleWordmark";
+import { particleCount, sampleWordmark, type Target } from "./sampleWordmark";
 
 type Particle = {
   x: number;
@@ -7,28 +7,46 @@ type Particle = {
   vy: number;
   tx: number;
   ty: number;
-  mx: number;
-  my: number;
   homeX: number;
   homeY: number;
-  orbitA: number;
-  orbitR: number;
-  size: number;
-  shade: number;
   delay: number;
   edge: number;
   seed: number;
+  size: number;
+  cr: number;
+  cg: number;
+  cb: number;
+  stampFree?: { img: HTMLCanvasElement; css: number };
+  stampFormed?: { img: HTMLCanvasElement; css: number };
 };
 
-const LOOP = 17.6;
-const FREE_END = 1.6;
-const FORM_END = 6.8;
-const HOLD_WORD_END = 10.2;
-const TO_MARK_END = 12.2;
-const HOLD_MARK_END = 14.0;
-const DISSOLVE_END = 16.8;
+type Cluster = { x: number; y: number; sx: number; sy: number; weight: number };
 
-const SHADES = ["#000000", "#000000", "#000000", "#000000", "#000000"];
+type ScatterField = {
+  cx: number;
+  cy: number;
+  inset: number;
+  w: number;
+  h: number;
+  clusters: Cluster[];
+  weightSum: number;
+  i: number;
+};
+
+const LOOP = 14.8;
+const FREE_END = 1.8;
+const FORM_END = 6.0;
+const HOLD_END = 9.6;
+const DISSOLVE_END = 13.2;
+
+const SHADE_RGB: [number, number, number][] = [
+  [0, 0, 0],
+  [0, 0, 0],
+  [17 / 255, 17 / 255, 17 / 255],
+  [23 / 255, 23 / 255, 23 / 255],
+  [0, 0, 0],
+];
+const SHADE_HEX = ["#000000", "#000000", "#111111", "#171717", "#000000"];
 
 function rand(min: number, max: number) {
   return min + Math.random() * (max - min);
@@ -44,18 +62,18 @@ function gauss() {
 
 function sizeFor(i: number, n: number) {
   const t = i / n;
-  if (t < 0.76) return rand(1.65, 2.25);
-  if (t < 0.94) return rand(2.3, 2.9);
-  return rand(3.05, 3.7);
+  if (t < 0.82) return rand(1.05, 1.55);
+  if (t < 0.95) return rand(1.55, 2.05);
+  return rand(2.1, 2.5);
 }
 
 function smooth(t: number) {
-  const x = clamp(t, 0, 1);
+  const x = t < 0 ? 0 : t > 1 ? 1 : t;
   return x * x * (3 - 2 * x);
 }
 
 function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n));
+  return n < min ? min : n > max ? max : n;
 }
 
 function inSoftField(x: number, y: number, w: number, h: number, reach: number) {
@@ -65,17 +83,16 @@ function inSoftField(x: number, y: number, w: number, h: number, reach: number) 
   const edge = 0.8 + 0.2 * Math.sin(ang * 1.55 + 0.4) + 0.14 * Math.cos(ang * 3.8) + 0.09 * Math.sin(ang * 6.4 + 1.2);
   const rx = nx / 0.96;
   const ry = ny / 0.9;
-  return rx * rx + ry * ry < (edge * reach) ** 2;
+  const lim = edge * reach;
+  return rx * rx + ry * ry < lim * lim;
 }
 
-function organicHomes(n: number, w: number, h: number) {
+function createField(w: number, h: number): ScatterField {
   const cx = w * rand(0.46, 0.54);
   const cy = h * rand(0.44, 0.54);
-  const inset = 8;
-  const clusters: { x: number; y: number; sx: number; sy: number; weight: number }[] = [];
+  const clusters: Cluster[] = [];
   const count = 6 + Math.floor(Math.random() * 3);
   let weightSum = 0;
-
   for (let i = 0; i < count; i++) {
     const ang = (i / count) * Math.PI * 2 + rand(-0.7, 0.7);
     const dist = rand(0.08, 0.4);
@@ -89,70 +106,155 @@ function organicHomes(n: number, w: number, h: number) {
     weightSum += cluster.weight;
     clusters.push(cluster);
   }
-
-  const pickCluster = () => {
-    let ticket = Math.random() * weightSum;
-    for (const cluster of clusters) {
-      ticket -= cluster.weight;
-      if (ticket <= 0) return cluster;
-    }
-    return clusters[clusters.length - 1];
-  };
-
-  const sample = (reach: number) => {
-    let x = cx;
-    let y = cy;
-    for (let attempt = 0; attempt < 12; attempt++) {
-      const roll = Math.random();
-      if (roll < 0.22) {
-        const ang = Math.random() * Math.PI * 2;
-        const r = Math.pow(Math.random(), 0.42);
-        const warp = 0.62 + 0.5 * Math.sin(ang * 2.4 + reach * 3) * Math.cos(ang * 1.3);
-        x = cx + Math.cos(ang) * r * w * 0.5 * warp;
-        y = cy + Math.sin(ang) * r * h * 0.48 * warp;
-      } else if (roll < 0.3) {
-        x = cx + gauss() * w * 0.28;
-        y = cy + gauss() * h * 0.3;
-      } else {
-        const cluster = pickCluster();
-        x = cluster.x + gauss() * cluster.sx * 0.58;
-        y = cluster.y + gauss() * cluster.sy * 0.58;
-      }
-      if (inSoftField(x, y, w, h, reach)) break;
-    }
-    return {
-      x: clamp(x, inset, w - inset),
-      y: clamp(y, inset, h - inset),
-    };
-  };
-
-  const homes: { x: number; y: number }[] = [];
-  for (let i = 0; i < n; i++) homes.push(sample(i % 5 === 0 ? 1.18 : 1.0));
-  return homes;
+  return { cx, cy, inset: 8, w, h, clusters, weightSum, i: 0 };
 }
 
-function circleStamp(diameter: number, color: string, dpr: number, cache: Map<string, HTMLCanvasElement>) {
+function pickCluster(field: ScatterField) {
+  let ticket = Math.random() * field.weightSum;
+  for (let c = 0; c < field.clusters.length; c++) {
+    ticket -= field.clusters[c].weight;
+    if (ticket <= 0) return field.clusters[c];
+  }
+  return field.clusters[field.clusters.length - 1];
+}
+
+function sampleField(field: ScatterField, reach: number) {
+  let x = field.cx;
+  let y = field.cy;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const roll = Math.random();
+    if (roll < 0.22) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = Math.pow(Math.random(), 0.42);
+      const warp = 0.62 + 0.5 * Math.sin(ang * 2.4 + reach * 3) * Math.cos(ang * 1.3);
+      x = field.cx + Math.cos(ang) * r * field.w * 0.5 * warp;
+      y = field.cy + Math.sin(ang) * r * field.h * 0.48 * warp;
+    } else if (roll < 0.3) {
+      x = field.cx + gauss() * field.w * 0.28;
+      y = field.cy + gauss() * field.h * 0.3;
+    } else {
+      const cluster = pickCluster(field);
+      x = cluster.x + gauss() * cluster.sx * 0.58;
+      y = cluster.y + gauss() * cluster.sy * 0.58;
+    }
+    if (inSoftField(x, y, field.w, field.h, reach)) break;
+  }
+  return {
+    x: clamp(x, field.inset, field.w - field.inset),
+    y: clamp(y, field.inset, field.h - field.inset),
+  };
+}
+
+function fillHomes(field: ScatterField, particles: Particle[], budget: number) {
+  const n = particles.length;
+  const end = Math.min(n, field.i + budget);
+  for (; field.i < end; field.i++) {
+    const pos = sampleField(field, field.i % 5 === 0 ? 1.18 : 1.0);
+    particles[field.i].homeX = pos.x;
+    particles[field.i].homeY = pos.y;
+  }
+  return field.i >= n;
+}
+
+function circleStamp(diameter: number, color: string, dpr: number, cache: Map<string, { img: HTMLCanvasElement; css: number }>) {
   const d = Math.max(0.8, Math.round(diameter * 4) / 4);
   const key = `${d}|${color}|${dpr}`;
-  let stamp = cache.get(key);
-  if (!stamp) {
-    const pad = 0.85;
-    const css = d + pad * 2;
-    stamp = document.createElement("canvas");
-    stamp.width = Math.max(2, Math.ceil(css * dpr));
-    stamp.height = Math.max(2, Math.ceil(css * dpr));
-    const g = stamp.getContext("2d");
-    if (g) {
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.imageSmoothingEnabled = true;
-      g.fillStyle = color;
-      g.beginPath();
-      g.arc(css / 2, css / 2, d / 2, 0, Math.PI * 2);
-      g.fill();
-    }
-    cache.set(key, stamp);
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const pad = 0.85;
+  const css = d + pad * 2;
+  const img = document.createElement("canvas");
+  img.width = Math.max(2, Math.ceil(css * dpr));
+  img.height = Math.max(2, Math.ceil(css * dpr));
+  const g = img.getContext("2d");
+  if (g) {
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = color;
+    g.beginPath();
+    g.arc(css / 2, css / 2, d / 2, 0, Math.PI * 2);
+    g.fill();
   }
-  return { stamp, css: d + 1.7 };
+  const stamp = { img, css: d + 1.7 };
+  cache.set(key, stamp);
+  return stamp;
+}
+
+const VERT = `
+attribute vec2 a_pos;
+attribute float a_size;
+attribute vec3 a_color;
+uniform vec2 u_res;
+uniform float u_dpr;
+varying vec3 v_color;
+void main() {
+  vec2 clip = (a_pos / u_res) * 2.0 - 1.0;
+  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+  gl_PointSize = max(a_size * u_dpr, 1.0);
+  v_color = a_color;
+}
+`;
+
+const FRAG = `
+precision mediump float;
+varying vec3 v_color;
+void main() {
+  vec2 p = gl_PointCoord * 2.0 - 1.0;
+  float d = dot(p, p);
+  if (d > 1.0) discard;
+  float alpha = 1.0 - smoothstep(0.78, 1.0, d);
+  gl_FragColor = vec4(v_color * alpha, alpha);
+}
+`;
+
+function compile(gl: WebGLRenderingContext, type: number, src: string) {
+  const shader = gl.createShader(type);
+  if (!shader) return null;
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    gl.deleteShader(shader);
+    return null;
+  }
+  return shader;
+}
+
+function initGpu(gl: WebGLRenderingContext) {
+  const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) return null;
+  const program = gl.createProgram();
+  if (!program) return null;
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+
+  const buffer = gl.createBuffer();
+  if (!buffer) return null;
+
+  return {
+    program,
+    buffer,
+    aPos: gl.getAttribLocation(program, "a_pos"),
+    aSize: gl.getAttribLocation(program, "a_size"),
+    aColor: gl.getAttribLocation(program, "a_color"),
+    uRes: gl.getUniformLocation(program, "u_res"),
+    uDpr: gl.getUniformLocation(program, "u_dpr"),
+  };
+}
+
+function getGL(canvas: HTMLCanvasElement): WebGLRenderingContext | null {
+  const opts: WebGLContextAttributes = {
+    alpha: true,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    premultipliedAlpha: true,
+    powerPreference: "high-performance",
+  };
+  const context = canvas.getContext("webgl", opts) || canvas.getContext("experimental-webgl", opts);
+  return context instanceof WebGLRenderingContext ? context : null;
 }
 
 export type Engine = {
@@ -164,13 +266,17 @@ export type Engine = {
 };
 
 export function createEngine(canvas: HTMLCanvasElement): Engine {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
+  const gl = getGL(canvas);
+  const gpu = gl ? initGpu(gl) : null;
+  const ctx = gpu ? null : canvas.getContext("2d", { alpha: true, desynchronized: true });
+  if (!gpu && !ctx) {
     return { resize: async () => {}, setPointer: () => {}, setVisible: () => {}, setReduced: () => {}, destroy: () => {} };
   }
 
-  const stamps = new Map<string, HTMLCanvasElement>();
+  const stamps = new Map<string, { img: HTMLCanvasElement; css: number }>();
   let particles: Particle[] = [];
+  let packed = new Float32Array(0);
+  let packedBytes = 0;
   let cssW = 0;
   let cssH = 0;
   let dpr = 1;
@@ -190,53 +296,110 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
   let emaDt = 1 / 60;
   let lite = false;
   let frame = 0;
+  let scatter: ScatterField | null = null;
 
-  const makeParticles = (word: Target[], mark: Target[], w: number, h: number) => {
+  const fineQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const onFine = () => {
+    finePointer = fineQuery.matches;
+  };
+  fineQuery.addEventListener("change", onFine);
+
+  const makeParticles = (word: Target[], w: number, h: number) => {
     const n = word.length;
-    const homes = organicHomes(n, w, h);
-    const cx = w * 0.5;
-    const cy = h * 0.5;
-    return word.map((target, i) => {
-      const home = homes[i];
-      const markT = mark[i] ?? target;
-      return {
+    const field = createField(w, h);
+    const list = new Array<Particle>(n);
+    for (let i = 0; i < n; i++) {
+      const target = word[i];
+      const home = sampleField(field, i % 5 === 0 ? 1.18 : 1.0);
+      const size = sizeFor(i, n);
+      const rgb = SHADE_RGB[i % SHADE_RGB.length];
+      const hex = SHADE_HEX[i % SHADE_HEX.length];
+      const p: Particle = {
         x: home.x,
         y: home.y,
         vx: rand(-0.14, 0.14),
         vy: rand(-0.12, 0.12),
         tx: target.x,
         ty: target.y,
-        mx: markT.x,
-        my: markT.y,
         homeX: home.x,
         homeY: home.y,
-        orbitA: Math.atan2(home.y - cy, home.x - cx) + rand(-0.18, 0.18),
-        orbitR: Math.hypot(home.x - cx, home.y - cy),
-        size: sizeFor(i, n),
-        shade: i % SHADES.length,
-        delay: target.edge ? (i / n) * 0.18 : 0.08 + (i / n) * 0.38,
+        delay: target.edge ? (i / n) * 0.16 : 0.06 + (i / n) * 0.34,
         edge: target.edge,
         seed: Math.random() * Math.PI * 2,
+        size,
+        cr: rgb[0],
+        cg: rgb[1],
+        cb: rgb[2],
       };
-    });
+      if (ctx) {
+        p.stampFree = circleStamp(size * 1.06, hex, dpr, stamps);
+        p.stampFormed = circleStamp(size * 1.12, hex, dpr, stamps);
+      }
+      list[i] = p;
+    }
+    packed = new Float32Array(n * 6);
+    return list;
   };
 
-  const reshuffleHomes = (w: number, h: number) => {
-    const homes = organicHomes(particles.length, w, h);
-    const cx = w * 0.5;
-    const cy = h * 0.5;
-    for (let i = 0; i < particles.length; i++) {
-      particles[i].homeX = homes[i].x;
-      particles[i].homeY = homes[i].y;
-      particles[i].orbitA = Math.atan2(homes[i].y - cy, homes[i].x - cx);
-      particles[i].orbitR = Math.hypot(homes[i].x - cx, homes[i].y - cy);
+  const drawGpu = (formed: boolean) => {
+    if (!gl || !gpu) return;
+    const n = particles.length;
+    const sizeMul = formed ? 1.12 : 1.06;
+    for (let i = 0; i < n; i++) {
+      const p = particles[i];
+      const o = i * 6;
+      packed[o] = p.x;
+      packed[o + 1] = p.y;
+      packed[o + 2] = p.size * sizeMul;
+      packed[o + 3] = p.cr;
+      packed[o + 4] = p.cg;
+      packed[o + 5] = p.cb;
+    }
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(gpu.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gpu.buffer);
+    if (packedBytes !== packed.byteLength) {
+      gl.bufferData(gl.ARRAY_BUFFER, packed, gl.DYNAMIC_DRAW);
+      packedBytes = packed.byteLength;
+    } else {
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed);
+    }
+
+    const stride = 24;
+    gl.enableVertexAttribArray(gpu.aPos);
+    gl.vertexAttribPointer(gpu.aPos, 2, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(gpu.aSize);
+    gl.vertexAttribPointer(gpu.aSize, 1, gl.FLOAT, false, stride, 8);
+    gl.enableVertexAttribArray(gpu.aColor);
+    gl.vertexAttribPointer(gpu.aColor, 3, gl.FLOAT, false, stride, 12);
+    gl.uniform2f(gpu.uRes, cssW, cssH);
+    gl.uniform1f(gpu.uDpr, dpr);
+    gl.drawArrays(gl.POINTS, 0, n);
+  };
+
+  const drawCanvas = (formed: boolean) => {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, cssW, cssH);
+    const n = particles.length;
+    for (let i = 0; i < n; i++) {
+      const p = particles[i];
+      const stamp = formed ? p.stampFormed : p.stampFree;
+      if (!stamp) continue;
+      const half = stamp.css * 0.5;
+      ctx.drawImage(stamp.img, p.x - half, p.y - half, stamp.css, stamp.css);
     }
   };
 
   const step = (now: number) => {
     raf = 0;
     if (!visible) return;
-    const dt = Math.min(0.032, (now - last) / 1000);
+    const rawDt = (now - last) / 1000;
+    const dt = rawDt > 0.032 ? 0.032 : rawDt;
     last = now;
     emaDt = emaDt * 0.9 + dt * 0.1;
     if (emaDt > 0.02) lite = true;
@@ -244,26 +407,48 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
     frame += 1;
     const elapsed = (now - t0) / 1000;
     const cycle = elapsed % LOOP;
-    if (prevCycle < HOLD_MARK_END && cycle >= HOLD_MARK_END) reshuffleHomes(cssW, cssH);
+    if (prevCycle < FORM_END + 0.35 && cycle >= FORM_END + 0.35) {
+      scatter = createField(cssW, cssH);
+    }
+    if (scatter && cycle >= FORM_END + 0.35 && cycle < HOLD_END) {
+      const done = fillHomes(scatter, particles, lite ? 90 : 180);
+      if (done) scatter = null;
+    }
     prevCycle = cycle;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = lite ? "low" : "high";
-    ctx.clearRect(0, 0, cssW, cssH);
+    const formed = cycle >= FORM_END && cycle < HOLD_END + 0.12;
+    const skipNoise = lite && (frame & 1) === 0;
+    const follow = pointer ? 0.52 : 0.18;
+    px += (aimX - px) * follow;
+    py += (aimY - py) * follow;
 
-    const formed = cycle >= FORM_END && cycle < HOLD_MARK_END + 0.15;
-    const skipNoise = lite && frame % 2 === 0;
-    if (pointer) {
-      px += (aimX - px) * 0.58;
-      py += (aimY - py) * 0.58;
-    }
+    const dAimX = aimX - px;
+    const dAimY = aimY - py;
+    const pointerLive = finePointer && (pointer || dAimX * dAimX + dAimY * dAimY > 0.16);
+    const radius = formed ? 72 : 98;
+    const radius2 = radius * radius;
+    const live = pointer ? 1 : 0.35;
+    const forceScale = formed ? 0.88 : 1.22;
+    const n = particles.length;
+    const stepScale = dt * 60;
+    const marginX = cssW * 0.03;
+    const marginY = cssH * 0.045;
+    const right = cssW - marginX;
+    const bottom = cssH - marginY;
+    const hardMaxX = cssW - 2;
+    const hardMaxY = cssH - 2;
+    const tFreeA = now * 0.0007;
+    const tFreeB = now * 0.00065;
+    const tHoldA = now * 0.001;
+    const tHoldB = now * 0.0009;
+    const tReduceA = now * 0.00055;
+    const tReduceB = now * 0.0005;
 
-    for (let i = 0; i < particles.length; i++) {
+    for (let i = 0; i < n; i++) {
       const p = particles[i];
       if (reduced) {
-        p.x = p.tx + Math.sin(now * 0.00055 + p.seed) * 0.22;
-        p.y = p.ty + Math.cos(now * 0.0005 + p.seed) * 0.22;
+        p.x = p.tx + Math.sin(tReduceA + p.seed) * 0.22;
+        p.y = p.ty + Math.cos(tReduceB + p.seed) * 0.22;
         continue;
       }
 
@@ -271,109 +456,92 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
       let ay = 0;
 
       if (cycle < FREE_END) {
-        ax = (p.homeX - p.x) * 0.007;
-        ay = (p.homeY - p.y) * 0.007;
-        if (!skipNoise || i % 2 === 0) {
-          ax += Math.sin(now * 0.0007 + p.seed) * 0.042;
-          ay += Math.cos(now * 0.00065 + p.seed * 1.3) * 0.038;
+        ax = (p.homeX - p.x) * 0.018;
+        ay = (p.homeY - p.y) * 0.018;
+        if (!skipNoise || (i & 1) === 0) {
+          ax += Math.sin(tFreeA + p.seed) * 0.038;
+          ay += Math.cos(tFreeB + p.seed * 1.3) * 0.034;
         }
       } else if (cycle < FORM_END) {
         const local = (cycle - FREE_END) / (FORM_END - FREE_END);
-        const gate = Math.max(0, Math.min(1, (local - p.delay * 0.42) / 0.55));
-        const ease = smooth(gate);
-        const curve = (1 - ease) * (1 - ease);
-        const destX = p.tx + Math.sin(p.seed) * 16 * curve;
-        const destY = p.ty + Math.cos(p.seed * 1.31) * 9 * curve;
-        ax = (destX - p.x) * (0.026 + ease * 0.2);
-        ay = (destY - p.y) * (0.026 + ease * 0.2);
+        const gate = local - p.delay * 0.38;
+        const eased = smooth(gate > 0 ? (gate < 0.58 ? gate / 0.58 : 1) : 0);
+        const curve = (1 - eased) * (1 - eased);
+        const destX = p.tx + Math.sin(p.seed) * 14 * curve;
+        const destY = p.ty + Math.cos(p.seed * 1.31) * 8 * curve;
+        const pull = 0.028 + eased * 0.22;
+        ax = (destX - p.x) * pull;
+        ay = (destY - p.y) * pull;
         if (!lite && curve > 0.02) {
-          ax += Math.sin(now * 0.001 + p.seed) * curve * 0.018;
-          ay += Math.cos(now * 0.0009 + p.seed) * curve * 0.016;
+          ax += Math.sin(tHoldA + p.seed) * curve * 0.016;
+          ay += Math.cos(tHoldB + p.seed) * curve * 0.014;
         }
-      } else if (cycle < HOLD_WORD_END) {
-        ax = (p.tx - p.x) * 0.5;
-        ay = (p.ty - p.y) * 0.5;
+      } else if (cycle < HOLD_END) {
+        ax = (p.tx - p.x) * 0.48;
+        ay = (p.ty - p.y) * 0.48;
         if (!skipNoise || i % 6 === 0) {
-          ax += Math.sin(now * 0.001 + p.seed) * 0.0016;
-          ay += Math.cos(now * 0.0009 + p.seed) * 0.0016;
-        }
-      } else if (cycle < TO_MARK_END) {
-        const local = (cycle - HOLD_WORD_END) / (TO_MARK_END - HOLD_WORD_END);
-        const gate = Math.max(0, Math.min(1, (local - p.delay * 0.28) / 0.68));
-        const ease = smooth(gate);
-        const arc = (1 - ease) * 14;
-        const destX = p.mx + Math.cos(p.orbitA + ease * 0.8) * arc;
-        const destY = p.my + Math.sin(p.orbitA + ease * 0.8) * arc * 0.85;
-        ax = (destX - p.x) * (0.036 + ease * 0.18);
-        ay = (destY - p.y) * (0.036 + ease * 0.18);
-      } else if (cycle < HOLD_MARK_END) {
-        ax = (p.mx - p.x) * 0.52;
-        ay = (p.my - p.y) * 0.52;
-        if (!skipNoise || i % 6 === 0) {
-          ax += Math.sin(now * 0.001 + p.seed) * 0.0014;
-          ay += Math.cos(now * 0.0009 + p.seed) * 0.0014;
+          ax += Math.sin(tHoldA + p.seed) * 0.0015;
+          ay += Math.cos(tHoldB + p.seed) * 0.0015;
         }
       } else if (cycle < DISSOLVE_END) {
-        const local = (cycle - HOLD_MARK_END) / (DISSOLVE_END - HOLD_MARK_END);
-        const leave = Math.max(0, Math.min(1, (local - (1 - p.edge) * 0.28 - p.delay * 0.14) / 0.52));
-        ax = (p.homeX - p.x) * (0.01 + leave * 0.034);
-        ay = (p.homeY - p.y) * (0.01 + leave * 0.034);
+        const local = (cycle - HOLD_END) / (DISSOLVE_END - HOLD_END);
+        const leave = local - (1 - p.edge) * 0.22 - p.delay * 0.12;
+        const eased = smooth(leave > 0 ? (leave < 0.55 ? leave / 0.55 : 1) : 0);
+        const pull = 0.012 + eased * 0.038;
+        ax = (p.homeX - p.x) * pull;
+        ay = (p.homeY - p.y) * pull;
+        if (!skipNoise || (i & 1) === 0) {
+          ax += Math.sin(tFreeA + p.seed) * eased * 0.03;
+          ay += Math.cos(tFreeB + p.seed * 1.3) * eased * 0.026;
+        }
       } else {
-        ax = (p.homeX - p.x) * 0.01;
-        ay = (p.homeY - p.y) * 0.01;
-        if (!skipNoise || i % 2 === 0) {
-          ax += Math.sin(now * 0.0007 + p.seed) * 0.04;
-          ay += Math.cos(now * 0.00065 + p.seed * 1.3) * 0.036;
+        ax = (p.homeX - p.x) * 0.016;
+        ay = (p.homeY - p.y) * 0.016;
+        if (!skipNoise || (i & 1) === 0) {
+          ax += Math.sin(tFreeA + p.seed) * 0.038;
+          ay += Math.cos(tFreeB + p.seed * 1.3) * 0.034;
         }
       }
 
       let pushed = false;
-      if (pointer && finePointer) {
+      if (pointerLive) {
         const dx = p.x - px;
         const dy = p.y - py;
         const d2 = dx * dx + dy * dy;
-        const radius = formed ? 56 : 86;
-        if (d2 > 0.04 && d2 < radius * radius) {
+        if (d2 > 0.04 && d2 < radius2) {
           const d = Math.sqrt(d2);
-          const falloff = (1 - d / radius) ** 1.65;
-          const force = falloff * (formed ? 0.72 : 1.15);
+          const falloff = (1 - d / radius) ** 1.55;
+          const force = falloff * live * forceScale;
           if (formed) {
-            ax *= 0.38;
-            ay *= 0.38;
+            ax *= 0.32;
+            ay *= 0.32;
           }
-          ax += (dx / d) * force;
-          ay += (dy / d) * force;
+          const inv = force / d;
+          ax += dx * inv;
+          ay += dy * inv;
           pushed = true;
         }
       }
 
-      p.vx = (p.vx + ax) * (pushed ? 0.84 : 0.9);
-      p.vy = (p.vy + ay) * (pushed ? 0.84 : 0.9);
-      p.x += p.vx * dt * 60;
-      p.y += p.vy * dt * 60;
+      const damp = pushed ? 0.82 : 0.88;
+      p.vx = (p.vx + ax) * damp;
+      p.vy = (p.vy + ay) * damp;
+      p.x += p.vx * stepScale;
+      p.y += p.vy * stepScale;
 
-      const marginX = cssW * 0.045;
-      const marginY = cssH * 0.06;
-      if (p.x < marginX) p.vx += (marginX - p.x) * 0.018;
-      else if (p.x > cssW - marginX) p.vx -= (p.x - (cssW - marginX)) * 0.018;
-      if (p.y < marginY) p.vy += (marginY - p.y) * 0.018;
-      else if (p.y > cssH - marginY) p.vy -= (p.y - (cssH - marginY)) * 0.018;
+      if (p.x < marginX) p.vx += (marginX - p.x) * 0.02;
+      else if (p.x > right) p.vx -= (p.x - right) * 0.02;
+      if (p.y < marginY) p.vy += (marginY - p.y) * 0.02;
+      else if (p.y > bottom) p.vy -= (p.y - bottom) * 0.02;
 
-      const hard = 2;
-      p.x = clamp(p.x, hard, cssW - hard);
-      p.y = clamp(p.y, hard, cssH - hard);
+      if (p.x < 2) p.x = 2;
+      else if (p.x > hardMaxX) p.x = hardMaxX;
+      if (p.y < 2) p.y = 2;
+      else if (p.y > hardMaxY) p.y = hardMaxY;
     }
 
-    for (let s = 0; s < SHADES.length; s++) {
-      const color = SHADES[s];
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        if (p.shade !== s) continue;
-        const drawSize = formed ? p.size * 1.12 : p.size * 1.08;
-        const { stamp, css } = circleStamp(drawSize, color, dpr, stamps);
-        ctx.drawImage(stamp, p.x - css / 2, p.y - css / 2, css, css);
-      }
-    }
+    if (gpu) drawGpu(formed);
+    else drawCanvas(formed);
 
     raf = window.requestAnimationFrame(step);
   };
@@ -396,14 +564,18 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
     stamps.clear();
     canvas.width = Math.floor(cssW * dpr);
     canvas.height = Math.floor(cssH * dpr);
+    if (ctx) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+    }
     const gen = ++generation;
-    const count = particleCount();
-    const word = await sampleWordmark(cssW, cssH, count);
+    const word = await sampleWordmark(cssW, cssH, particleCount());
     if (gen !== generation) return;
-    const mark = assignMarks(word, sampleMark(cssW, cssH, count));
-    particles = makeParticles(word, mark, cssW, cssH);
+    particles = makeParticles(word, cssW, cssH);
+    scatter = null;
     if (reduced) {
-      for (const p of particles) {
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
         p.x = p.tx;
         p.y = p.ty;
         p.vx = 0;
@@ -439,6 +611,7 @@ export function createEngine(canvas: HTMLCanvasElement): Engine {
     destroy: () => {
       generation += 1;
       stamps.clear();
+      fineQuery.removeEventListener("change", onFine);
       if (raf) window.cancelAnimationFrame(raf);
       raf = 0;
     },

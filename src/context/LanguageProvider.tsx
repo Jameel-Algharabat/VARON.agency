@@ -6,7 +6,7 @@ const LEGACY_KEYS = ["rasm-lang", "altura-lang", "by-pixel-lang", "golding-lang"
 
 function readLang(): Lang {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem("rasm-lang");
+    const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_KEYS[0]);
     if (stored === "ar" || stored === "en") return stored;
   } catch {
     /* ignore */
@@ -16,7 +16,6 @@ function readLang(): Lang {
 
 type LanguageContextValue = {
   lang: Lang;
-  dir: "ltr" | "rtl";
   t: Copy;
   setLang: (lang: Lang) => void;
 };
@@ -41,7 +40,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LanguageContextValue>(
     () => ({
       lang,
-      dir: lang === "ar" ? "rtl" : "ltr",
       t: copy[lang],
       setLang: setLangState,
     }),

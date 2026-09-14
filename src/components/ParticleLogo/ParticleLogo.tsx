@@ -15,7 +15,13 @@ export function ParticleLogo({ className = "", label }: { className?: string; la
     const engine = createEngine(canvas);
     engine.setReduced(Boolean(reduce));
 
+    let box = wrap.getBoundingClientRect();
+    const syncBox = () => {
+      box = wrap.getBoundingClientRect();
+    };
+
     const fit = () => {
+      syncBox();
       void engine.resize(wrap.clientWidth, wrap.clientHeight);
     };
 
@@ -31,13 +37,13 @@ export function ParticleLogo({ className = "", label }: { className?: string; la
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
     const onMove = (event: PointerEvent) => {
       if (!fine.matches) return;
-      const box = wrap.getBoundingClientRect();
       engine.setPointer(event.clientX - box.left, event.clientY - box.top, true);
     };
     const onLeave = () => engine.setPointer(0, 0, false);
 
     wrap.addEventListener("pointermove", onMove, { passive: true });
     wrap.addEventListener("pointerleave", onLeave);
+    window.addEventListener("scroll", syncBox, { passive: true, capture: true });
     fit();
 
     return () => {
@@ -45,6 +51,7 @@ export function ParticleLogo({ className = "", label }: { className?: string; la
       io.disconnect();
       wrap.removeEventListener("pointermove", onMove);
       wrap.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", syncBox, true);
       engine.destroy();
     };
   }, [reduce]);

@@ -7,7 +7,7 @@ type ButtonProps = {
   href?: string;
   onClick?: () => void;
   type?: "button" | "submit";
-  variant?: "primary" | "secondary" | "inverse" | "ghost-inverse";
+  variant?: "primary" | "secondary";
   className?: string;
   disabled?: boolean;
   ariaLabel?: string;
@@ -17,8 +17,6 @@ type ButtonProps = {
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary: "btn btn-primary",
   secondary: "btn btn-secondary",
-  inverse: "btn btn-inverse",
-  "ghost-inverse": "btn btn-ghost-inverse",
 };
 
 export function Button({

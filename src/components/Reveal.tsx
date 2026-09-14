@@ -89,19 +89,3 @@ export function Lines({
     </Tag>
   );
 }
-
-/** Hairline that draws from the reading start when in view. */
-export function Rule({ className = "", delay = 0, inverse = false }: { className?: string; delay?: number; inverse?: boolean }) {
-  const reduce = useReducedMotion();
-  return (
-    <div className={`overflow-hidden ${className}`} aria-hidden="true">
-      <motion.div
-        className={`h-px w-full origin-left rtl:origin-right ${inverse ? "bg-paper/20" : "bg-rule"}`}
-        initial={reduce ? false : { scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, amount: 0.6 }}
-        transition={{ duration: 0.9, delay, ease: EASE }}
-      />
-    </div>
-  );
-}

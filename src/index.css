@@ -11,8 +11,6 @@
   --color-rule: #e1e1de;
   --color-paper: #f7f7f5;
   --color-white: #ffffff;
-
-  --ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
@@ -208,16 +206,6 @@
     font-feature-settings: "tnum", "cv11";
   }
 
-  .t-logo {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    line-height: 1;
-    text-transform: uppercase;
-    direction: ltr;
-    unicode-bidi: isolate;
-  }
-
   /* ---------- Layout ---------- */
   .wrap {
     width: 100%;
@@ -242,10 +230,6 @@
     .grid-12 {
       column-gap: 32px;
     }
-  }
-
-  .hairline {
-    border-color: var(--color-rule);
   }
 
   /* ---------- Buttons ---------- */
@@ -302,16 +286,6 @@
     background: var(--color-white);
   }
 
-  .btn-ghost-inverse {
-    background: transparent;
-    color: var(--color-paper);
-    border: 1px solid color-mix(in srgb, var(--color-paper) 28%, transparent);
-  }
-
-  .btn-ghost-inverse:hover {
-    border-color: var(--color-paper);
-  }
-
   /* Underline that grows from the reading start */
   .u-line {
     background-image: linear-gradient(currentColor, currentColor);
@@ -328,14 +302,6 @@
   .u-line[aria-current="true"],
   .u-line[data-active="true"] {
     background-size: 100% 1px;
-  }
-
-  .u-line-on {
-    background-size: 100% 1px;
-  }
-
-  .u-line-on:hover {
-    background-size: 0 1px;
   }
 
   /* Arrow shift on parent hover */
@@ -373,26 +339,6 @@
     .group:hover .media > img,
     .group:hover .media > video {
       transform: scale(1.02);
-    }
-  }
-
-  /* ---------- Cards (used sparingly) ---------- */
-  .card {
-    background: var(--color-white);
-    border: 1px solid var(--color-rule);
-    border-radius: 20px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.03);
-    transition:
-      transform 320ms var(--ease),
-      box-shadow 320ms var(--ease);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .card:hover {
-      transform: scale(1.015);
-      box-shadow:
-        0 1px 2px rgb(0 0 0 / 0.04),
-        0 12px 28px rgb(0 0 0 / 0.06);
     }
   }
 
@@ -438,17 +384,6 @@
     }
     50% {
       opacity: 1;
-    }
-  }
-
-  /* ---------- Marquee (roles row) ---------- */
-  .marquee-track {
-    animation: marquee 44s linear infinite;
-  }
-
-  @keyframes marquee {
-    to {
-      transform: translate3d(-25%, 0, 0);
     }
   }
 }
@@ -529,10 +464,6 @@ html[dir="rtl"] .group:focus-visible .arrow-shift {
   transform: translateX(-4px);
 }
 
-html[dir="rtl"] .marquee-track {
-  animation-direction: reverse;
-}
-
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -545,9 +476,5 @@ html[dir="rtl"] .marquee-track {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .marquee-track {
-    animation: none;
   }
 }
