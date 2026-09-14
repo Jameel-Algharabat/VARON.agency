@@ -8,8 +8,7 @@ import { Logo } from "./Logo";
 export function Wordmark({ className = "", mark = true }: { className?: string; mark?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 whitespace-nowrap ${className}`} dir="ltr" aria-label={site.name}>
-      {mark ? <Logo className="size-[1em]" /> : null}
-      <span className="t-logo">{site.name}</span>
+      {mark ? <Logo className="h-[1em] w-auto" /> : null}
     </span>
   );
 }

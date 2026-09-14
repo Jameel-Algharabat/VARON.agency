@@ -134,10 +134,7 @@ export function Navigation() {
             onClick={() => setOpen(false)}
             aria-label={site.name}
           >
-            <Logo className="size-7 md:size-8" />
-            <span className="t-logo" dir="ltr">
-              {site.name}
-            </span>
+            <Logo className="h-6 w-auto" />
           </Link>
 
           <nav
