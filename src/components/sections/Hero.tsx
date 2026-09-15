@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { useBooking } from "../../context/booking";
 import { useLanguage } from "../../context/LanguageProvider";
 import { Arrow } from "../Arrow";
+import { CtaGroup } from "../CtaGroup";
 import { ParticleLogo } from "../ParticleLogo";
 import { Button } from "../Button";
 import { EASE } from "../../motion";
@@ -9,7 +9,6 @@ import { ClipReveal, Lines } from "../Reveal";
 
 export function Hero() {
   const { t } = useLanguage();
-  const { openBooking } = useBooking();
   const reduce = useReducedMotion();
 
   const fade = (delay: number) => ({
@@ -51,15 +50,15 @@ export function Hero() {
           </motion.p>
 
           <motion.div
-            className="col-span-12 flex flex-col items-start gap-3 sm:flex-row sm:items-center md:col-span-5 md:justify-end lg:col-span-6 lg:col-start-7"
+            className="cta-group-wrap col-span-12 flex md:col-span-5 md:justify-end lg:col-span-6 lg:col-start-7"
             {...fade(0.5)}
           >
-            <Button onClick={openBooking} ariaLabel={t.contact.bookAria} arrow className="w-full sm:w-auto">
-              {t.hero.primary}
-            </Button>
-            <Button href="#work" variant="secondary" arrow className="w-full sm:w-auto">
-              {t.hero.secondary}
-            </Button>
+            <div className="flex w-full flex-col items-stretch gap-3 md:w-auto">
+              <CtaGroup bookLabel={t.hero.primary} />
+              <Button href="#work" variant="secondary" arrow>
+                {t.hero.secondary}
+              </Button>
+            </div>
           </motion.div>
         </div>
 

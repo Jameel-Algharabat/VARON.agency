@@ -197,6 +197,8 @@ export const copy = {
       lead: "Tell us what you’re working on. Thirty minutes is enough to know whether we’re the right studio for it.",
       book: "Book a 30-minute discovery call",
       bookAria: "Book a 30-minute discovery call — opens the scheduling dialog",
+      conversation: "Start a conversation",
+      conversationAria: "Start a conversation — opens in a new tab",
       emailLabel: "Or email us",
     },
     booking: {
@@ -420,6 +422,8 @@ export const copy = {
       lead: "أخبرنا بما تعمل عليه. ثلاثون دقيقة تكفي لنعرف إن كنّا الاستوديو المناسب له.",
       book: "احجز مكالمة تعارف مدتها ٣٠ دقيقة",
       bookAria: "احجز مكالمة تعارف مدتها ٣٠ دقيقة — تفتح نافذة الحجز",
+      conversation: "ابدأ محادثة",
+      conversationAria: "ابدأ محادثة — تفتح في تبويب جديد",
       emailLabel: "أو راسلنا بالبريد",
     },
     booking: {

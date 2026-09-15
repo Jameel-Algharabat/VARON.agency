@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useBooking } from "../context/booking";
 import { useLanguage } from "../context/LanguageProvider";
 import { site } from "../content/site";
-import { Arrow } from "./Arrow";
+import { CtaGroup } from "./CtaGroup";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { EASE } from "../motion";
 import { Logo } from "./Logo";
@@ -226,18 +226,11 @@ export function Navigation() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.36, duration: 0.5, ease: EASE }}
               >
-                <button
-                  type="button"
-                  className="btn btn-primary w-full"
-                  aria-label={t.contact.bookAria}
-                  onClick={() => {
-                    setOpen(false);
-                    openBooking();
-                  }}
-                >
-                  <span>{t.hero.primary}</span>
-                  <Arrow />
-                </button>
+                <CtaGroup
+                  bookLabel={t.hero.primary}
+                  stacked
+                  onNavigate={() => setOpen(false)}
+                />
                 <div className="flex items-center justify-between gap-4">
                   <a href={`mailto:${site.email}`} className="t-small text-mute hover:text-ink" dir="ltr">
                     {site.email}

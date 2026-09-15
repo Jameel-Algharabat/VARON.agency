@@ -239,14 +239,17 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    box-sizing: border-box;
     min-height: 48px;
     padding: 0 22px;
+    border: 1px solid transparent;
     border-radius: 999px;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.005em;
     line-height: 1.2;
     white-space: nowrap;
+    text-align: center;
     transition:
       background-color var(--d-fast) var(--ease),
       color var(--d-fast) var(--ease),
@@ -261,20 +264,82 @@
   .btn-primary {
     background: var(--color-ink);
     color: var(--color-paper);
-  }
-
-  .btn-primary:hover {
-    background: var(--color-graphite);
+    border-color: var(--color-ink);
   }
 
   .btn-secondary {
     background: transparent;
     color: var(--color-ink);
-    border: 1px solid color-mix(in srgb, var(--color-ink) 22%, transparent);
+    border-color: var(--color-ink);
   }
 
-  .btn-secondary:hover {
-    border-color: var(--color-ink);
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:hover:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-graphite);
+      border-color: var(--color-graphite);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-ink);
+      color: var(--color-paper);
+      border-color: var(--color-ink);
+    }
+  }
+
+  .cta-group-wrap {
+    container-type: inline-size;
+    container-name: cta;
+  }
+
+  .cta-group-wrap > .btn {
+    width: 100%;
+  }
+
+  .cta-group {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .cta-group > .btn {
+    width: 100%;
+  }
+
+  @container cta (min-width: 32rem) {
+    .cta-group:not(.cta-group--stack) {
+      width: auto;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cta-group:not(.cta-group--stack) > .btn,
+    .cta-group-wrap > .btn {
+      width: auto;
+    }
+  }
+
+  .cta-group--stack,
+  .cta-group--stack > .btn {
+    width: 100%;
+  }
+
+  .cta-group--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
 
   .btn-inverse {
@@ -476,5 +541,10 @@ html[dir="rtl"] .group:focus-visible .arrow-shift {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .btn:hover,
+  .btn:active {
+    transform: none;
   }
 }
